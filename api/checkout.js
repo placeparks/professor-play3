@@ -319,7 +319,8 @@ async function createCheckoutSession(req, res) {
   }
   
   // Check request body size (Vercel has 4.5MB limit)
-  const contentLength = req.get('content-length');
+  // In Vercel serverless, use req.headers instead of req.get()
+  const contentLength = req.headers['content-length'] || req.headers['Content-Length'];
   if (contentLength) {
     const sizeMB = parseInt(contentLength) / (1024 * 1024);
     if (sizeMB > 4.5) {
