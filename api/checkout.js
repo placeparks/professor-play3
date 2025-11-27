@@ -373,6 +373,15 @@ async function createCheckoutSession(req, res) {
       cardImages,
       cardData
     } = req.body;
+    
+    // Check if images are already uploaded (URLs instead of base64)
+    const imagesAlreadyUploaded = cardImages && cardImages.length > 0 && 
+                                  typeof cardImages[0] === 'string' && 
+                                  cardImages[0].startsWith('http');
+    
+    if (imagesAlreadyUploaded) {
+      console.log('✅ Images already uploaded, using provided URLs');
+    }
 
     // Validate required fields
     if (!quantity || quantity < 1) {
@@ -416,7 +425,34 @@ async function createCheckoutSession(req, res) {
     let allImageUrls = [];
     let processedCardData = cardData || [];
     
-    if (cardData && cardData.length > 0) {
+    // If images are already uploaded (URLs provided), use them directly
+    if (imagesAlreadyUploaded && cardImages && cardImages.length > 0) {
+      console.log('✅ Using pre-uploaded image URLs');
+      allImageUrls = cardImages;
+      
+      // Extract front and back URLs from cardData if available
+      if (cardData && cardData.length > 0) {
+        processedCardData = cardData.map((card, index) => {
+          const updatedCard = { ...card };
+          
+          // URLs are in order: [front1, back1, front2, back2, ...]
+          const frontUrlIndex = index * 2;
+          const backUrlIndex = index * 2 + 1;
+          
+          if (allImageUrls[frontUrlIndex]) {
+            updatedCard.frontUrl = allImageUrls[frontUrlIndex];
+            frontImageUrls.push(allImageUrls[frontUrlIndex]);
+          }
+          
+          if (allImageUrls[backUrlIndex]) {
+            updatedCard.backUrl = allImageUrls[backUrlIndex];
+            backImageUrls.push(allImageUrls[backUrlIndex]);
+          }
+          
+          return updatedCard;
+        });
+      }
+    } else if (cardData && cardData.length > 0) {
       // Check if Supabase is properly configured
       const supabaseUrl = process.env.SUPABASE_URL;
       const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
