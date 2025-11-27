@@ -621,12 +621,45 @@ async function handleWebhook(req, res) {
     });
   }
 
+  // Ensure we have the raw body as a Buffer or string
+  // On Vercel, req.body might be parsed as JSON, so we need to handle it
+  let rawBody = req.body;
+  
+  // Check if body is already a Buffer (from express.raw())
+  if (Buffer.isBuffer(rawBody)) {
+    // Good, we have the raw body
+  } else if (typeof rawBody === 'string') {
+    // Also good, convert to Buffer
+    rawBody = Buffer.from(rawBody, 'utf8');
+  } else if (typeof rawBody === 'object' && rawBody !== null) {
+    // Body was parsed as JSON - this shouldn't happen but we need to handle it
+    // Try to get raw body from request stream if available
+    logError(
+      ErrorCategory.SIGNATURE_VERIFICATION,
+      'Webhook body was parsed as JSON instead of raw',
+      new Error('Body is an object, not raw Buffer'),
+      correlationId,
+      { 
+        bodyType: typeof rawBody,
+        isBuffer: Buffer.isBuffer(rawBody),
+        bodyKeys: Object.keys(rawBody || {})
+      }
+    );
+    
+    return res.status(400).json({ 
+      error: 'Webhook payload must be provided as a string or a Buffer',
+      code: 'INVALID_BODY_TYPE',
+      message: 'Body was parsed as JSON. Ensure express.raw() middleware is applied to /api/webhook route.',
+      correlationId
+    });
+  }
+
   let event;
 
   try {
-    // Verify the webhook signature
+    // Verify the webhook signature with raw body
     event = stripe.webhooks.constructEvent(
-      req.body,
+      rawBody,
       sig,
       webhookSecret
     );
@@ -646,7 +679,9 @@ async function handleWebhook(req, res) {
       correlationId,
       { 
         signatureLength: sig.length,
-        bodyLength: req.body.length,
+        bodyLength: rawBody ? (Buffer.isBuffer(rawBody) ? rawBody.length : rawBody.length) : 0,
+        bodyType: typeof rawBody,
+        isBuffer: Buffer.isBuffer(rawBody),
         secretConfigured: !!webhookSecret
       }
     );
