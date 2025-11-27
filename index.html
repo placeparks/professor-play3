@@ -2779,10 +2779,21 @@
                 }
                 
                 // Final verification before sending
+                const requestPayload = {
+                    quantity,
+                    shippingAddress,
+                    cardImages,
+                    cardData
+                };
+                
+                const payloadString = JSON.stringify(requestPayload);
+                const payloadSizeMB = (new Blob([payloadString]).size / (1024 * 1024)).toFixed(2);
+                
                 console.log('🚀 Sending checkout request:', {
                     quantity,
                     cardImagesCount: cardImages.length,
                     cardDataCount: cardData.length,
+                    payloadSizeMB: `${payloadSizeMB} MB`,
                     cardImagesBreakdown: {
                         total: cardImages.length,
                         expectedFronts: frontImages.length,
@@ -2796,22 +2807,44 @@
                     }))
                 });
                 
+                // Check payload size (Vercel has 4.5MB limit)
+                if (parseFloat(payloadSizeMB) > 4.0) {
+                    throw new Error(
+                        `Request payload is too large (${payloadSizeMB} MB). ` +
+                        `Vercel has a 4.5MB limit. ` +
+                        `Please reduce the number of cards or image quality. ` +
+                        `The server will upload images to storage, but the initial request must be smaller.`
+                    );
+                }
+                
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        quantity,
-                        shippingAddress,
-                        cardImages,
-                        cardData
-                    })
+                    body: payloadString
                 });
                 
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to create checkout session');
+                    // Handle 413 Payload Too Large error specifically
+                    if (response.status === 413) {
+                        const errorText = await response.text();
+                        throw new Error(
+                            `Request payload too large (${payloadSizeMB} MB). ` +
+                            `Vercel has a 4.5MB request body limit. ` +
+                            `Please reduce the number of cards or try again. ` +
+                            `The images will be uploaded to storage on the server side.`
+                        );
+                    }
+                    
+                    // Try to parse as JSON, fallback to text
+                    let error;
+                    try {
+                        error = await response.json();
+                    } catch {
+                        error = { error: await response.text() };
+                    }
+                    throw new Error(error.error || error.message || 'Failed to create checkout session');
                 }
                 
                 const data = await response.json();
