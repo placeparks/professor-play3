@@ -317,6 +317,22 @@ async function createCheckoutSession(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+  
+  // Check request body size (Vercel has 4.5MB limit)
+  const contentLength = req.get('content-length');
+  if (contentLength) {
+    const sizeMB = parseInt(contentLength) / (1024 * 1024);
+    if (sizeMB > 4.5) {
+      console.error(`❌ Request body too large: ${sizeMB.toFixed(2)} MB (Vercel limit: 4.5 MB)`);
+      return res.status(413).json({ 
+        error: 'Payload too large',
+        message: `Request body is ${sizeMB.toFixed(2)} MB, but Vercel has a 4.5 MB limit. Please reduce the number of cards or image quality.`,
+        sizeMB: sizeMB.toFixed(2),
+        limitMB: 4.5
+      });
+    }
+    console.log(`📦 Request body size: ${sizeMB.toFixed(2)} MB`);
+  }
 
   // Check for required environment variables
   if (!process.env.STRIPE_SECRET_KEY) {
