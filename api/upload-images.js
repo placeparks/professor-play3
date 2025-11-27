@@ -23,65 +23,98 @@ function getExtensionFromBase64(base64String) {
 }
 
 // Upload images to Supabase Storage
+// Images are expected in order: [front1, back1, front2, back2, ...]
+// Organized by card: each card gets its own folder with front and back
 async function uploadImagesToStorage(images, orderId, shippingAddress) {
   const uploadedUrls = [];
   const bucketName = 'order-images';
   
-  // Create a folder structure: order-images/{orderId}/{timestamp}/
+  // Create folder structure: order-images/{orderId}/{timestamp}/{country_postal}/
   const timestamp = Date.now();
-  const folderPath = `${orderId}/${timestamp}`;
-  
-  // Use shipping address to create a subfolder for organization
   const addressHash = shippingAddress 
-    ? `${shippingAddress.country}_${shippingAddress.postal_code?.replace(/\s+/g, '_') || 'unknown'}`
+    ? `${shippingAddress.country}_${(shippingAddress.postal_code || 'unknown').replace(/\s+/g, '_')}`
     : 'unknown';
   
-  const addressFolder = `${folderPath}/${addressHash}`;
-
-  for (let i = 0; i < images.length; i++) {
-    try {
-      const imageData = images[i];
-      
-      // Skip if already a URL (not base64)
-      if (typeof imageData === 'string' && imageData.startsWith('http')) {
-        uploadedUrls.push(imageData);
-        continue;
+  const baseFolderPath = `${orderId}/${timestamp}/${addressHash}`;
+  
+  // Process images in pairs (front + back per card)
+  // Images array: [front1, back1, front2, back2, ...]
+  for (let i = 0; i < images.length; i += 2) {
+    const cardIndex = Math.floor(i / 2) + 1;
+    const cardFolder = `${baseFolderPath}/card-${cardIndex}`;
+    
+    // Upload front image (even index)
+    if (i < images.length) {
+      try {
+        const frontImage = images[i];
+        
+        // Skip if already a URL
+        if (typeof frontImage === 'string' && frontImage.startsWith('http')) {
+          uploadedUrls.push(frontImage);
+        } else {
+          const buffer = base64ToBuffer(frontImage);
+          const extension = getExtensionFromBase64(frontImage);
+          const filePath = `${cardFolder}/front.${extension}`;
+          
+          const { data, error } = await supabase.storage
+            .from(bucketName)
+            .upload(filePath, buffer, {
+              contentType: `image/${extension}`,
+              upsert: false
+            });
+          
+          if (error) {
+            console.error(`Error uploading front for card ${cardIndex}:`, error);
+          } else {
+            const { data: urlData } = supabase.storage
+              .from(bucketName)
+              .getPublicUrl(filePath);
+            
+            if (urlData?.publicUrl) {
+              uploadedUrls.push(urlData.publicUrl);
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error processing front for card ${cardIndex}:`, error);
       }
-      
-      // Convert base64 to buffer
-      const buffer = base64ToBuffer(imageData);
-      const extension = getExtensionFromBase64(imageData);
-      const fileName = `${uuidv4()}.${extension}`;
-      const filePath = `${addressFolder}/${fileName}`;
-      
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from(bucketName)
-        .upload(filePath, buffer, {
-          contentType: `image/${extension}`,
-          upsert: false
-        });
-      
-      if (error) {
-        console.error(`Error uploading image ${i + 1}:`, error);
-        // Continue with other images even if one fails
-        continue;
+    }
+    
+    // Upload back image (odd index)
+    if (i + 1 < images.length) {
+      try {
+        const backImage = images[i + 1];
+        
+        // Skip if already a URL
+        if (typeof backImage === 'string' && backImage.startsWith('http')) {
+          uploadedUrls.push(backImage);
+        } else {
+          const buffer = base64ToBuffer(backImage);
+          const extension = getExtensionFromBase64(backImage);
+          const filePath = `${cardFolder}/back.${extension}`;
+          
+          const { data, error } = await supabase.storage
+            .from(bucketName)
+            .upload(filePath, buffer, {
+              contentType: `image/${extension}`,
+              upsert: false
+            });
+          
+          if (error) {
+            console.error(`Error uploading back for card ${cardIndex}:`, error);
+          } else {
+            const { data: urlData } = supabase.storage
+              .from(bucketName)
+              .getPublicUrl(filePath);
+            
+            if (urlData?.publicUrl) {
+              uploadedUrls.push(urlData.publicUrl);
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error processing back for card ${cardIndex}:`, error);
       }
-      
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(filePath);
-      
-      if (urlData?.publicUrl) {
-        uploadedUrls.push(urlData.publicUrl);
-      } else {
-        console.error(`Failed to get public URL for image ${i + 1}`);
-      }
-      
-    } catch (error) {
-      console.error(`Error processing image ${i + 1}:`, error);
-      // Continue with next image
     }
   }
   
