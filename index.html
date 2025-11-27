@@ -2706,8 +2706,7 @@
                 // Calculate quantity
                 const quantity = deck.reduce((acc, card) => acc + (card.quantity || 1), 0);
                 
-                // Prepare card images and data
-                // Collect ALL images (front + back) for backend upload
+                // Prepare card images organized properly (front/back pairs)
                 const frontImages = deck.map(card => card.front || card.originalFront).filter(Boolean);
                 
                 // Collect back images - use card-specific back, or global back, or null
@@ -2717,43 +2716,181 @@
                     if (backImg) backImages.push(backImg);
                 });
                 
-                // Combine all images for upload (fronts first, then backs)
-                const cardImages = [...frontImages, ...backImages];
-                
-                // Prepare card data (backend will handle image uploads)
-                const cardData = deck.map((card) => {
-                    return {
-                        quantity: card.quantity || 1,
-                        trimMm: card.trimMm || 0,
-                        bleedMm: card.bleedMm || 2,
-                        hasBleed: card.hasBleed || false
-                    };
-                });
+                // Prepare card data WITHOUT base64 images (we'll upload separately)
+                const cardData = deck.map((card) => ({
+                    quantity: card.quantity || 1,
+                    trimMm: card.trimMm || 0,
+                    bleedMm: card.bleedMm || 2,
+                    hasBleed: card.hasBleed || false
+                }));
                 
                 // Detect API URL
                 let API_URL;
+                let UPLOAD_API_URL;
                 if (window.location.protocol === 'file:') {
                     API_URL = 'http://localhost:3001/api/checkout';
+                    UPLOAD_API_URL = 'http://localhost:3001/api/upload-images';
                 } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                     const port = window.location.port || '3001';
                     API_URL = `http://localhost:${port}/api/checkout`;
+                    UPLOAD_API_URL = `http://localhost:${port}/api/upload-images`;
                 } else {
                     API_URL = '/api/checkout';
+                    UPLOAD_API_URL = '/api/upload-images';
                 }
                 
-                // Send to backend - backend handles ALL upload logic
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
+                // Combine all images in order: [front1, back1, front2, back2, ...]
+                // This is CRITICAL - backend expects pairs!
+                const allImages = [];
+                for (let i = 0; i < frontImages.length; i++) {
+                    if (frontImages[i]) allImages.push(frontImages[i]);
+                    if (backImages[i]) allImages.push(backImages[i]);
+                }
+                
+                // Check total payload size with base64
+                const testPayload = {
+                    quantity,
+                    shippingAddress,
+                    cardImages: allImages,
+                    cardData
+                };
+                const payloadSizeMB = (new Blob([JSON.stringify(testPayload)]).size / (1024 * 1024)).toFixed(2);
+                console.log(`📊 Estimated payload size: ${payloadSizeMB} MB`);
+                
+                let uploadedImageUrls = [];
+                
+                // If payload is too large (>4MB), upload images in chunks first
+                if (parseFloat(payloadSizeMB) > 4.0) {
+                    console.log(`📤 Payload too large (${payloadSizeMB} MB), uploading images via backend first...`);
+                    submitText.innerText = 'Uploading images...';
+                    
+                    // Generate temp order ID
+                    const tempOrderId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    console.log(`📦 Total images to upload: ${allImages.length} (${frontImages.length} fronts, ${backImages.length} backs)`);
+                    
+                    // Upload in chunks of 5 images to stay under 4.5MB limit per request
+                    // Chunk size must be even to preserve front/back pairs
+                    const CHUNK_SIZE = 6; // 3 cards per chunk (6 images = 3 front + 3 back pairs)
+                    const totalChunks = Math.ceil(allImages.length / CHUNK_SIZE);
+                    
+                    for (let i = 0; i < allImages.length; i += CHUNK_SIZE) {
+                        const chunk = allImages.slice(i, i + CHUNK_SIZE);
+                        const chunkNum = Math.floor(i / CHUNK_SIZE) + 1;
+                        
+                        submitText.innerText = `Uploading batch ${chunkNum}/${totalChunks}...`;
+                        console.log(`📤 Uploading chunk ${chunkNum}/${totalChunks}: ${chunk.length} images`);
+                        
+                        try {
+                            const uploadResponse = await fetch(UPLOAD_API_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    images: chunk,
+                                    orderId: tempOrderId,
+                                    shippingAddress
+                                })
+                            });
+                            
+                            if (!uploadResponse.ok) {
+                                const errorText = await uploadResponse.text();
+                                console.error(`❌ Upload failed for chunk ${chunkNum}:`, errorText);
+                                throw new Error(`Upload failed: ${errorText}`);
+                            }
+                            
+                            const uploadData = await uploadResponse.json();
+                            if (uploadData.imageUrls && uploadData.imageUrls.length > 0) {
+                                uploadedImageUrls.push(...uploadData.imageUrls);
+                                console.log(`✅ Chunk ${chunkNum} uploaded: ${uploadData.imageUrls.length} URLs received`);
+                            } else {
+                                console.error(`⚠️ Chunk ${chunkNum} upload returned no URLs`);
+                            }
+                        } catch (uploadError) {
+                            console.error(`❌ Error uploading chunk ${chunkNum}:`, uploadError);
+                            throw new Error(`Failed to upload images: ${uploadError.message}`);
+                        }
+                    }
+                    
+                    console.log(`✅ All images uploaded successfully: ${uploadedImageUrls.length} total URLs`);
+                    
+                    // Map URLs back to cardData
+                    // URLs are in order: [front1, back1, front2, back2, ...]
+                    const finalCardData = cardData.map((card, index) => {
+                        const frontUrlIndex = index * 2;
+                        const backUrlIndex = index * 2 + 1;
+                        
+                        return {
+                            ...card,
+                            frontUrl: uploadedImageUrls[frontUrlIndex] || null,
+                            backUrl: uploadedImageUrls[backUrlIndex] || null
+                        };
+                    });
+                    
+                    // Send checkout request with URLs only (lightweight)
+                    submitText.innerText = 'Creating checkout...';
+                    
+                    const checkoutPayload = {
                         quantity,
                         shippingAddress,
-                        cardImages, // Send base64 - backend uploads to Supabase
-                        cardData
-                    })
-                });
+                        cardImages: uploadedImageUrls, // URLs instead of base64
+                        cardData: finalCardData
+                    };
+                    
+                    const checkoutPayloadSize = (new Blob([JSON.stringify(checkoutPayload)]).size / (1024 * 1024)).toFixed(2);
+                    console.log(`📊 Checkout payload size with URLs: ${checkoutPayloadSize} MB`);
+                    
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(checkoutPayload)
+                    });
+                    
+                    if (!response.ok) {
+                        let error;
+                        try {
+                            error = await response.json();
+                        } catch {
+                            error = { error: await response.text() };
+                        }
+                        throw new Error(error.error || error.message || 'Failed to create checkout session');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.url) {
+                        window.location.href = data.url;
+                    } else {
+                        throw new Error('No checkout URL received');
+                    }
+                } else {
+                    // Payload is small enough, send directly
+                    console.log(`✅ Payload size OK (${payloadSizeMB} MB), sending directly to checkout`);
+                    submitText.innerText = 'Creating checkout...';
+                    
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(testPayload)
+                    });
+                    
+                    if (!response.ok) {
+                        let error;
+                        try {
+                            error = await response.json();
+                        } catch {
+                            error = { error: await response.text() };
+                        }
+                        throw new Error(error.error || error.message || 'Failed to create checkout session');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.url) {
+                        window.location.href = data.url;
+                    } else {
+                        throw new Error('No checkout URL received');
+                    }
+                }
                 
                 if (!response.ok) {
                     let error;
