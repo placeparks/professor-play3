@@ -17,7 +17,8 @@ app.use(cors({
 
 // Webhook endpoint needs raw body for Stripe signature verification
 // IMPORTANT: This must come BEFORE express.json() middleware
-app.use('/api/webhook', express.raw({ type: 'application/json', limit: '10mb' }));
+// For Vercel compatibility, we apply raw body parser specifically to webhook route
+app.post('/api/webhook', express.raw({ type: 'application/json', limit: '10mb' }), handleWebhook);
 
 // All other endpoints use JSON with increased limit for image data
 app.use(express.json({ limit: '50mb' })); // Increased limit to handle base64 images
@@ -36,7 +37,6 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.post('/api/checkout', createCheckoutSession);
-app.post('/api/webhook', handleWebhook);
 app.post('/api/upload-images', require('./api/upload-images'));
 
 // Serve index.html for root route
