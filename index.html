@@ -1256,6 +1256,50 @@
             }
         }
 
+        // --- IMAGE COMPRESSION ---
+        async function compressImage(base64String, maxSizeMB = 0.8) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Calculate new dimensions to stay under maxSizeMB
+                    const maxDimension = 2048; // Max 2048px on longest side
+                    if (width > maxDimension || height > maxDimension) {
+                        if (width > height) {
+                            height = (height / width) * maxDimension;
+                            width = maxDimension;
+                        } else {
+                            width = (width / height) * maxDimension;
+                            height = maxDimension;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Try different quality levels to stay under size limit
+                    let quality = 0.8;
+                    let result = canvas.toDataURL('image/jpeg', quality);
+                    
+                    // If still too large, reduce quality
+                    while (result.length > maxSizeMB * 1024 * 1024 * 1.37 && quality > 0.3) {
+                        quality -= 0.1;
+                        result = canvas.toDataURL('image/jpeg', quality);
+                    }
+                    
+                    resolve(result);
+                };
+                img.onerror = () => resolve(base64String); // Fallback to original if compression fails
+                img.src = base64String;
+            });
+        }
+
         // --- IMAGE PROCESSING (Trim & Bleed) ---
         function processImage(imgSrc, trimMm, bleedMm, addBleed, callback) {
             if (!imgSrc) {
@@ -2769,13 +2813,24 @@
                     
                     console.log(`📦 Total images to upload: ${allImages.length} (${frontImages.length} fronts, ${backImages.length} backs)`);
                     
-                    // Upload in chunks of 5 images to stay under 4.5MB limit per request
-                    // Chunk size must be even to preserve front/back pairs
-                    const CHUNK_SIZE = 6; // 3 cards per chunk (6 images = 3 front + 3 back pairs)
-                    const totalChunks = Math.ceil(allImages.length / CHUNK_SIZE);
+                    // Compress images before upload to reduce payload size
+                    submitText.innerText = 'Compressing images...';
+                    console.log('🗜️ Compressing images to reduce payload size...');
+                    const compressedImages = [];
+                    for (let i = 0; i < allImages.length; i++) {
+                        console.log(`🗜️ Compressing image ${i + 1}/${allImages.length}...`);
+                        const compressed = await compressImage(allImages[i], 0.8); // Max 0.8MB per image
+                        compressedImages.push(compressed);
+                    }
+                    console.log(`✅ Compressed ${compressedImages.length} images`);
                     
-                    for (let i = 0; i < allImages.length; i += CHUNK_SIZE) {
-                        const chunk = allImages.slice(i, i + CHUNK_SIZE);
+                    // Upload in chunks of 2 images to stay under 4.5MB limit per request
+                    // Chunk size must be even to preserve front/back pairs
+                    const CHUNK_SIZE = 2; // 1 card per chunk (2 images = 1 front + 1 back pair)
+                    const totalChunks = Math.ceil(compressedImages.length / CHUNK_SIZE);
+                    
+                    for (let i = 0; i < compressedImages.length; i += CHUNK_SIZE) {
+                        const chunk = compressedImages.slice(i, i + CHUNK_SIZE);
                         const chunkNum = Math.floor(i / CHUNK_SIZE) + 1;
                         
                         submitText.innerText = `Uploading batch ${chunkNum}/${totalChunks}...`;
