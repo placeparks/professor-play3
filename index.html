@@ -2778,7 +2778,7 @@
                     API_URL = '/api/checkout';
                 }
                 
-                // Final verification before sending
+                // Check payload size BEFORE sending (Vercel has 4.5MB limit)
                 const requestPayload = {
                     quantity,
                     shippingAddress,
@@ -2789,7 +2789,7 @@
                 const payloadString = JSON.stringify(requestPayload);
                 const payloadSizeMB = (new Blob([payloadString]).size / (1024 * 1024)).toFixed(2);
                 
-                console.log('🚀 Sending checkout request:', {
+                console.log('🚀 Preparing checkout request:', {
                     quantity,
                     cardImagesCount: cardImages.length,
                     cardDataCount: cardData.length,
@@ -2798,31 +2798,91 @@
                         total: cardImages.length,
                         expectedFronts: frontImages.length,
                         expectedBacks: backImages.length
-                    },
-                    cardDataSample: cardData.slice(0, 2).map(c => ({
-                        hasFront: !!c.front,
-                        hasBack: !!c.back,
-                        frontIndex: c.frontIndex,
-                        backIndex: c.backIndex
-                    }))
+                    }
                 });
                 
-                // Check payload size (Vercel has 4.5MB limit)
+                // If payload is too large, upload images first, then send only URLs
+                let uploadedImageUrls = [];
+                let finalCardData = cardData;
+                
                 if (parseFloat(payloadSizeMB) > 4.0) {
-                    throw new Error(
-                        `Request payload is too large (${payloadSizeMB} MB). ` +
-                        `Vercel has a 4.5MB limit. ` +
-                        `Please reduce the number of cards or image quality. ` +
-                        `The server will upload images to storage, but the initial request must be smaller.`
-                    );
+                    console.log('📤 Payload too large, uploading images first...');
+                    
+                    // Generate temp order ID for upload
+                    const tempOrderId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    // Step 1: Upload images to Supabase Storage
+                    const uploadAPI_URL = API_URL.replace('/checkout', '/upload-images');
+                    const uploadResponse = await fetch(uploadAPI_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            images: cardImages,
+                            orderId: tempOrderId,
+                            shippingAddress: shippingAddress
+                        })
+                    });
+                    
+                    if (!uploadResponse.ok) {
+                        const uploadError = await uploadResponse.json().catch(() => ({ error: 'Upload failed' }));
+                        throw new Error(`Failed to upload images: ${uploadError.error || uploadError.message || 'Unknown error'}`);
+                    }
+                    
+                    const uploadData = await uploadResponse.json();
+                    uploadedImageUrls = uploadData.imageUrls || [];
+                    
+                    console.log(`✅ Uploaded ${uploadedImageUrls.length} images to storage`);
+                    
+                    // Step 2: Update cardData with uploaded URLs instead of base64
+                    finalCardData = cardData.map((card, index) => {
+                        const updatedCard = { ...card };
+                        // Remove base64 images, keep only metadata
+                        delete updatedCard.front;
+                        delete updatedCard.back;
+                        delete updatedCard.originalFront;
+                        delete updatedCard.originalBack;
+                        
+                        // Add URLs if available
+                        // Images are uploaded in order: [front1, back1, front2, back2, ...]
+                        const frontUrlIndex = index * 2;
+                        const backUrlIndex = index * 2 + 1;
+                        
+                        if (uploadedImageUrls[frontUrlIndex]) {
+                            updatedCard.frontUrl = uploadedImageUrls[frontUrlIndex];
+                        }
+                        if (uploadedImageUrls[backUrlIndex]) {
+                            updatedCard.backUrl = uploadedImageUrls[backUrlIndex];
+                        }
+                        
+                        return updatedCard;
+                    });
                 }
+                
+                // Step 3: Send checkout request with URLs only (or original if small enough)
+                const checkoutPayload = {
+                    quantity,
+                    shippingAddress,
+                    cardImages: uploadedImageUrls.length > 0 ? uploadedImageUrls : cardImages, // Use URLs if uploaded
+                    cardData: finalCardData
+                };
+                
+                const checkoutPayloadString = JSON.stringify(checkoutPayload);
+                const finalPayloadSizeMB = (new Blob([checkoutPayloadString]).size / (1024 * 1024)).toFixed(2);
+                
+                console.log('🚀 Sending checkout request:', {
+                    payloadSizeMB: `${finalPayloadSizeMB} MB`,
+                    usingUploadedUrls: uploadedImageUrls.length > 0,
+                    imageUrlCount: uploadedImageUrls.length
+                });
                 
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: payloadString
+                    body: checkoutPayloadString
                 });
                 
                 if (!response.ok) {
