@@ -2961,25 +2961,6 @@
                     }
                 }
                 
-                if (!response.ok) {
-                    let error;
-                    try {
-                        error = await response.json();
-                    } catch {
-                        error = { error: await response.text() };
-                    }
-                    throw new Error(error.error || error.message || 'Failed to create checkout session');
-                }
-                
-                const data = await response.json();
-                
-                if (data.url) {
-                    // Redirect to Stripe Checkout
-                    window.location.href = data.url;
-                } else {
-                    throw new Error('No checkout URL received');
-                }
-                
             } catch (error) {
                 console.error('Checkout error:', error);
                 alert('Checkout failed: ' + error.message);
