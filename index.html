@@ -2848,11 +2848,25 @@
                             });
                             
                             if (!uploadResponse.ok) {
-                                const errorText = await uploadResponse.text();
+                                // Read error response (can only read once)
+                                let errorText;
+                                try {
+                                    const errorData = await uploadResponse.json();
+                                    errorText = errorData.error || errorData.message || JSON.stringify(errorData);
+                                } catch {
+                                    // If JSON parsing fails, try text
+                                    try {
+                                        errorText = await uploadResponse.text();
+                                    } catch {
+                                        // If text reading also fails, use status
+                                        errorText = `HTTP ${uploadResponse.status}: ${uploadResponse.statusText}`;
+                                    }
+                                }
                                 console.error(`❌ Upload failed for chunk ${chunkNum}:`, errorText);
                                 throw new Error(`Upload failed: ${errorText}`);
                             }
                             
+                            // Read success response
                             const uploadData = await uploadResponse.json();
                             if (uploadData.imageUrls && uploadData.imageUrls.length > 0) {
                                 uploadedImageUrls.push(...uploadData.imageUrls);
