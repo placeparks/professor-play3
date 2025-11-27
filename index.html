@@ -736,6 +736,73 @@
             </div>
         </div>
 
+        <!-- DISCLAIMER MODAL -->
+        <div id="disclaimer-modal" class="fixed inset-0 bg-slate-900/90 z-[85] hidden flex items-center justify-center backdrop-blur-sm p-4">
+            <div class="bg-white dark:bg-slate-850 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden">
+                <!-- Header -->
+                <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
+                    <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                        <i data-lucide="alert-circle" class="w-5 h-5 text-amber-600 dark:text-amber-400"></i>
+                        Important Disclaimers
+                    </h3>
+                    <button onclick="closeDisclaimerModal()" class="text-slate-400 hover:text-red-500 transition-colors">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                
+                <!-- Content -->
+                <div class="p-6 bg-white dark:bg-slate-850">
+                    <div class="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg space-y-4">
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-white mb-3">
+                            Please confirm the following before proceeding to checkout:
+                        </h4>
+                        
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input 
+                                type="checkbox" 
+                                id="disclaimer-copyright" 
+                                class="mt-1 w-5 h-5 text-green-600 border-2 border-slate-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:bg-slate-800 dark:checked:bg-green-600 dark:checked:border-green-600 cursor-pointer transition-all flex-shrink-0"
+                                onchange="updateDisclaimerButton()"
+                            >
+                            <span class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">
+                                Yes, I confirm that all the images, names and other content added onto my design are correct and I that I own all copyrights for them or have full authorization to use them.
+                            </span>
+                        </label>
+                        
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input 
+                                type="checkbox" 
+                                id="disclaimer-bleed" 
+                                class="mt-1 w-5 h-5 text-green-600 border-2 border-slate-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:bg-slate-800 dark:checked:bg-green-600 dark:checked:border-green-600 cursor-pointer transition-all flex-shrink-0"
+                                onchange="updateDisclaimerButton()"
+                            >
+                            <span class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">
+                                I verify that I understand the bleed requirements and I adjusted the cards to have 2mm bleed for accurate printing.
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button 
+                            onclick="closeDisclaimerModal()" 
+                            class="flex-1 px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            id="disclaimer-proceed-btn"
+                            onclick="proceedToCheckout()" 
+                            disabled
+                            class="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600 flex items-center justify-center gap-2"
+                        >
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Proceed to Checkout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- CHECKOUT MODAL -->
         <div id="checkout-modal" class="fixed inset-0 bg-slate-900/90 z-[90] hidden flex items-center justify-center backdrop-blur-sm p-4">
             <div class="bg-white dark:bg-slate-850 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -823,8 +890,8 @@
                             </div>
                         </div>
 
-                        <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
-                            <button type="submit" id="checkout-submit-btn" class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <div class="pt-4">
+                            <button type="submit" id="checkout-submit-btn" class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
                                 <i data-lucide="lock" class="w-4 h-4"></i>
                                 <span id="checkout-submit-text">Proceed to Payment</span>
                             </button>
@@ -2670,8 +2737,43 @@
             }
         }
 
-        // Checkout Functions
-        function openCheckoutModal() {
+        // Disclaimer Modal Functions
+        function openDisclaimerModal() {
+            const modal = document.getElementById('disclaimer-modal');
+            if (!modal) return;
+            
+            // Reset checkboxes
+            const copyrightCheckbox = document.getElementById('disclaimer-copyright');
+            const bleedCheckbox = document.getElementById('disclaimer-bleed');
+            if (copyrightCheckbox) copyrightCheckbox.checked = false;
+            if (bleedCheckbox) bleedCheckbox.checked = false;
+            
+            updateDisclaimerButton();
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+        
+        function closeDisclaimerModal() {
+            const modal = document.getElementById('disclaimer-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+        
+        function updateDisclaimerButton() {
+            const copyrightCheckbox = document.getElementById('disclaimer-copyright');
+            const bleedCheckbox = document.getElementById('disclaimer-bleed');
+            const proceedBtn = document.getElementById('disclaimer-proceed-btn');
+            
+            if (copyrightCheckbox && bleedCheckbox && proceedBtn) {
+                // Both checkboxes must be checked to enable the button
+                proceedBtn.disabled = !(copyrightCheckbox.checked && bleedCheckbox.checked);
+            }
+        }
+        
+        function proceedToCheckout() {
+            // Close disclaimer modal
+            closeDisclaimerModal();
+            
+            // Open checkout modal
             const modal = document.getElementById('checkout-modal');
             if (!modal) return;
             
@@ -2694,6 +2796,12 @@
             
             modal.classList.remove('hidden');
             lucide.createIcons();
+        }
+
+        // Checkout Functions
+        function openCheckoutModal() {
+            // First show disclaimer modal
+            openDisclaimerModal();
         }
 
         function closeCheckoutModal() {
