@@ -2,12 +2,19 @@
   "version": 2,
   "routes": [
     {
+      "src": "/api/webhook",
+      "dest": "/api/webhook.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/server.js"
     }
   ],
   "functions": {
     "server.js": {
+      "maxDuration": 30
+    },
+    "api/webhook.js": {
       "maxDuration": 30
     }
   }
