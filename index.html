@@ -287,20 +287,29 @@
                     <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
                 </button>
 
-                 <!-- Exit Button (Visible only in Stepper Mode) -->
-                <button id="exit-btn" onclick="showLanding()" class="hidden text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 text-sm font-medium items-center gap-1">
-                    <i data-lucide="x" class="w-4 h-4"></i> Exit
-                </button>
-
-                <button id="start-btn" onclick="startDesign()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md font-semibold text-sm transition-colors shadow-sm">
+                <button id="start-btn" onclick="startDesign()" class="hidden md:block bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md font-semibold text-sm transition-colors shadow-sm">
                     Start Your Design
                 </button>
             </div>
             
             <!-- Mobile Menu Button -->
-            <button class="md:hidden text-slate-600 dark:text-slate-300 ml-4">
-                <i data-lucide="menu"></i>
+            <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="md:hidden text-slate-600 dark:text-slate-300 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <i data-lucide="menu" id="menu-icon"></i>
             </button>
+        </div>
+        
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <div class="container mx-auto px-4 py-4 space-y-3">
+                <a href="#" onclick="showHowItWorks(); closeMobileMenu();" class="block py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">How it Works</a>
+                <a href="#" onclick="showPricing(); closeMobileMenu();" class="block py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Pricing</a>
+                <a href="#" onclick="showWhyUs(); closeMobileMenu();" class="block py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Why Us</a>
+                <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <button onclick="startDesign(); closeMobileMenu();" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md font-semibold text-sm transition-colors shadow-sm">
+                        Start Your Design
+                    </button>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -815,9 +824,9 @@
                             id="disclaimer-proceed-btn"
                             onclick="proceedToCheckout()" 
                             disabled
-                            class="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600 flex items-center justify-center gap-2"
+                            class="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm sm:text-base shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600 flex items-center justify-center gap-1.5 sm:gap-2 touch-manipulation"
                         >
-                            <i data-lucide="check" class="w-4 h-4"></i>
+                            <i data-lucide="check" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
                             Proceed to Checkout
                         </button>
                     </div>
@@ -1035,27 +1044,30 @@
         <div id="design-stepper" class="hidden h-full flex flex-col min-h-screen">
             <!-- Stepper Header -->
             <div class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-30 transition-colors">
-                <div class="container mx-auto px-4">
-                    <div class="flex items-center justify-between py-4">
-                        <div class="flex space-x-8">
-                            <button onclick="setStep(1)" id="step-btn-1" class="text-sm font-semibold pb-1 step-active flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs">1</span> Customize Front
+                <div class="container mx-auto px-2 sm:px-4">
+                    <div class="flex items-center justify-between py-3 sm:py-4">
+                        <div class="flex items-center gap-1.5 sm:gap-3 md:gap-6 lg:gap-8 flex-1 min-w-0 overflow-x-auto">
+                            <button onclick="setStep(1)" id="step-btn-1" class="text-[10px] sm:text-xs md:text-sm font-semibold pb-1 step-active flex items-center gap-1 sm:gap-2 min-w-0 flex-shrink-0 touch-manipulation active:opacity-70 transition-opacity px-1 sm:px-0">
+                                <span class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[10px] sm:text-xs flex-shrink-0">1</span> 
+                                <span class="hidden sm:inline whitespace-nowrap">Customize Front</span>
+                                <span class="sm:hidden text-[10px] whitespace-nowrap">Front</span>
                             </button>
-                            <button onclick="setStep(2)" id="step-btn-2" class="text-sm font-semibold pb-1 step-inactive text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center text-xs">2</span> Customize Back
+                            <button onclick="setStep(2)" id="step-btn-2" class="text-[10px] sm:text-xs md:text-sm font-semibold pb-1 step-inactive text-slate-500 dark:text-slate-400 flex items-center gap-1 sm:gap-2 min-w-0 flex-shrink-0 touch-manipulation active:opacity-70 transition-opacity px-1 sm:px-0">
+                                <span class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center text-[10px] sm:text-xs flex-shrink-0">2</span> 
+                                <span class="hidden sm:inline whitespace-nowrap">Customize Back</span>
+                                <span class="sm:hidden text-[10px] whitespace-nowrap">Back</span>
                             </button>
-                            <button onclick="setStep(3)" id="step-btn-3" class="text-sm font-semibold pb-1 step-inactive text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center text-xs">3</span> Preview
+                            <button onclick="setStep(3)" id="step-btn-3" class="text-[10px] sm:text-xs md:text-sm font-semibold pb-1 step-inactive text-slate-500 dark:text-slate-400 flex items-center gap-1 sm:gap-2 min-w-0 flex-shrink-0 touch-manipulation active:opacity-70 transition-opacity px-1 sm:px-0">
+                                <span class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center text-[10px] sm:text-xs flex-shrink-0">3</span> 
+                                <span class="hidden sm:inline whitespace-nowrap">Preview</span>
+                                <span class="sm:hidden text-[10px] whitespace-nowrap">Preview</span>
                             </button>
                         </div>
-                        <div class="flex items-center gap-4">
-                             <div class="text-xs text-slate-500 dark:text-slate-400 text-right hidden sm:block">
+                        <div class="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                             <div class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 text-right hidden sm:block">
                                 <div class="font-bold text-slate-900 dark:text-white" id="total-price">Total: $0.00</div>
                                 <div id="deck-stats">0 Cards • S33 Stock</div>
                             </div>
-                            <button class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-bold text-sm shadow-sm flex items-center gap-2">
-                                <i data-lucide="shopping-cart" class="w-4 h-4"></i> Add to Cart
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -1164,22 +1176,22 @@
                             </div>
 
                             <!-- Preset Back Options (Only visible on step 2) -->
-                            <div id="preset-back-options" class="hidden mb-6">
-                                <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Quick Select</p>
-                                <div class="flex gap-3">
-                                    <button onclick="selectPresetBack('bg1.jpg')" class="flex-1 border-2 border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden hover:border-blue-400 dark:hover:border-blue-500 transition-all group cursor-pointer bg-slate-50 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700">
-                                        <div class="aspect-[2.5/3.5] relative">
-                                            <img src="/public/bg1.jpg" alt="Background 1" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity">
-                                            <div class="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/10 transition-colors"></div>
+                            <div id="preset-back-options" class="hidden mb-4 sm:mb-6">
+                                <p class="text-[10px] sm:text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 sm:mb-3 px-1">Quick Select</p>
+                                <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                                    <button onclick="selectPresetBack('bg1.jpg')" class="flex-1 max-w-[120px] sm:max-w-[140px] mx-auto sm:mx-0 border-2 border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden active:border-blue-500 sm:hover:border-blue-400 dark:active:border-blue-500 dark:sm:hover:border-blue-500 transition-all group cursor-pointer bg-slate-50 dark:bg-slate-800 active:bg-white sm:hover:bg-white dark:active:bg-slate-700 dark:sm:hover:bg-slate-700 touch-manipulation">
+                                        <div class="aspect-[2.5/3.5] relative w-full">
+                                            <img src="/public/bg1.jpg" alt="Background 1" class="w-full h-full object-cover opacity-90 group-active:opacity-100 sm:group-hover:opacity-100 transition-opacity" loading="lazy">
+                                            <div class="absolute inset-0 bg-blue-500/0 group-active:bg-blue-500/10 sm:group-hover:bg-blue-500/10 transition-colors"></div>
                                         </div>
-                                        <p class="text-[10px] font-medium text-slate-600 dark:text-slate-400 py-1.5 text-center">Option 1</p>
+                                        <p class="text-[9px] sm:text-[10px] font-medium text-slate-600 dark:text-slate-400 py-1 sm:py-1.5 text-center">Option 1</p>
                                     </button>
-                                    <button onclick="selectPresetBack('bg2.jpg')" class="flex-1 border-2 border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden hover:border-blue-400 dark:hover:border-blue-500 transition-all group cursor-pointer bg-slate-50 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700">
-                                        <div class="aspect-[2.5/3.5] relative">
-                                            <img src="/public/bg2.jpg" alt="Background 2" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity">
-                                            <div class="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/10 transition-colors"></div>
+                                    <button onclick="selectPresetBack('bg2.jpg')" class="flex-1 max-w-[120px] sm:max-w-[140px] mx-auto sm:mx-0 border-2 border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden active:border-blue-500 sm:hover:border-blue-400 dark:active:border-blue-500 dark:sm:hover:border-blue-500 transition-all group cursor-pointer bg-slate-50 dark:bg-slate-800 active:bg-white sm:hover:bg-white dark:active:bg-slate-700 dark:sm:hover:bg-slate-700 touch-manipulation">
+                                        <div class="aspect-[2.5/3.5] relative w-full">
+                                            <img src="/public/bg2.jpg" alt="Background 2" class="w-full h-full object-cover opacity-90 group-active:opacity-100 sm:group-hover:opacity-100 transition-opacity" loading="lazy">
+                                            <div class="absolute inset-0 bg-blue-500/0 group-active:bg-blue-500/10 sm:group-hover:bg-blue-500/10 transition-colors"></div>
                                         </div>
-                                        <p class="text-[10px] font-medium text-slate-600 dark:text-slate-400 py-1.5 text-center">Option 2</p>
+                                        <p class="text-[9px] sm:text-[10px] font-medium text-slate-600 dark:text-slate-400 py-1 sm:py-1.5 text-center">Option 2</p>
                                     </button>
                                 </div>
                             </div>
@@ -1202,57 +1214,57 @@
                 </div>
 
                 <!-- Canvas Area -->
-                <div class="flex-grow bg-slate-100 dark:bg-slate-950 canvas-area p-4 md:p-8 flex flex-col items-center justify-center relative overflow-hidden transition-colors">
+                <div class="flex-grow bg-slate-100 dark:bg-slate-950 canvas-area p-2 sm:p-4 md:p-8 flex flex-col items-center justify-center relative overflow-hidden transition-colors">
                     
-                    <div class="absolute top-4 left-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur px-3 py-1.5 rounded shadow text-xs font-medium text-slate-600 dark:text-slate-300 z-10 flex gap-2">
+                    <div class="absolute top-2 left-2 sm:top-4 sm:left-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur px-2 sm:px-3 py-1 sm:py-1.5 rounded shadow text-[10px] sm:text-xs font-medium text-slate-600 dark:text-slate-300 z-10 flex gap-1.5 sm:gap-2">
                         <span>Canvas: 2.5" x 3.5"</span>
-                        <span id="canvas-badge" class="hidden bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 rounded-sm font-bold">Common Back</span>
+                        <span id="canvas-badge" class="hidden bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-1.5 sm:px-2 rounded-sm font-bold text-[10px] sm:text-xs">Common Back</span>
                     </div>
 
                     <!-- SINGLE EDITOR MODE (Step 1 & 2) -->
                     <div id="editor-view" class="flex flex-col items-center justify-center w-full h-full">
                         
                         <!-- Navigation Buttons (Hidden if 0 or 1 card) -->
-                        <div id="deck-nav-controls" class="hidden items-center gap-4 mb-4 z-10">
-                            <button onclick="prevCard()" class="bg-white dark:bg-slate-800 p-2 rounded-full shadow hover:bg-blue-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Previous Card">
-                                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        <div id="deck-nav-controls" class="hidden items-center gap-2 sm:gap-4 mb-2 sm:mb-4 z-10">
+                            <button onclick="prevCard()" class="bg-white dark:bg-slate-800 p-1.5 sm:p-2 rounded-full shadow hover:bg-blue-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors touch-manipulation" title="Previous Card">
+                                <i data-lucide="chevron-left" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                             </button>
                             
-                            <div class="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-full shadow pl-4 pr-2 py-1.5 transition-colors">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-200 min-w-[40px] text-center" id="card-counter">1 / 1</span>
-                                <div class="w-px h-4 bg-slate-200 dark:bg-slate-600"></div>
-                                <div class="flex items-center gap-1">
-                                    <button onclick="updateQuantity(-1)" class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Decrease Quantity">
-                                        <i data-lucide="minus" class="w-3 h-3"></i>
+                            <div class="flex items-center gap-2 sm:gap-3 bg-white dark:bg-slate-800 rounded-full shadow pl-2 sm:pl-4 pr-1.5 sm:pr-2 py-1 sm:py-1.5 transition-colors">
+                                <span class="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 min-w-[35px] sm:min-w-[40px] text-center" id="card-counter">1 / 1</span>
+                                <div class="w-px h-3 sm:h-4 bg-slate-200 dark:bg-slate-600"></div>
+                                <div class="flex items-center gap-0.5 sm:gap-1">
+                                    <button onclick="updateQuantity(-1)" class="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors touch-manipulation" title="Decrease Quantity">
+                                        <i data-lucide="minus" class="w-2.5 h-2.5 sm:w-3 sm:h-3"></i>
                                     </button>
-                                    <span id="card-quantity-badge" class="text-xs font-bold text-blue-600 dark:text-blue-400 w-8 text-center">x1</span>
-                                    <button onclick="updateQuantity(1)" class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Increase Quantity">
-                                        <i data-lucide="plus" class="w-3 h-3"></i>
+                                    <span id="card-quantity-badge" class="text-[10px] sm:text-xs font-bold text-blue-600 dark:text-blue-400 w-6 sm:w-8 text-center">x1</span>
+                                    <button onclick="updateQuantity(1)" class="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors touch-manipulation" title="Increase Quantity">
+                                        <i data-lucide="plus" class="w-2.5 h-2.5 sm:w-3 sm:h-3"></i>
                                     </button>
                                 </div>
                             </div>
 
-                            <button onclick="nextCard()" class="bg-white dark:bg-slate-800 p-2 rounded-full shadow hover:bg-blue-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Next Card">
-                                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                            <button onclick="nextCard()" class="bg-white dark:bg-slate-800 p-1.5 sm:p-2 rounded-full shadow hover:bg-blue-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors touch-manipulation" title="Next Card">
+                                <i data-lucide="chevron-right" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                             </button>
                         </div>
 
                         <!-- The Card Canvas -->
                         <!-- Changed w-[300px] to w-auto and added max-w to handle aspect ratio scaling -->
-                        <div id="card-canvas" class="h-[420px] w-auto max-w-full bg-white dark:bg-slate-800 shadow-2xl rounded-xl relative border border-slate-200 dark:border-slate-700 transition-all duration-200 transform origin-center">
+                        <div id="card-canvas" class="h-[280px] sm:h-[350px] md:h-[420px] w-auto max-w-[90vw] sm:max-w-full bg-white dark:bg-slate-800 shadow-2xl rounded-xl relative border border-slate-200 dark:border-slate-700 transition-all duration-200 transform origin-center">
                             
                             <!-- Cut Line Indicator (Blue Dotted) -->
                             <div id="cut-line" class="absolute inset-0 border-2 border-cyan-500 border-dotted pointer-events-none z-40 hidden opacity-90">
-                                <span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] text-cyan-600 dark:text-cyan-400 font-bold font-mono bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded shadow border border-cyan-100 dark:border-cyan-900 whitespace-nowrap">Cut Line (63x88mm)</span>
+                                <span class="absolute -bottom-4 sm:-bottom-6 left-1/2 -translate-x-1/2 text-[8px] sm:text-[9px] text-cyan-600 dark:text-cyan-400 font-bold font-mono bg-white dark:bg-slate-800 px-1 sm:px-1.5 py-0.5 rounded shadow border border-cyan-100 dark:border-cyan-900 whitespace-nowrap">Cut Line (63x88mm)</span>
                             </div>
 
                             <!-- Content Container -->
                             <div id="canvas-content" class="w-full h-full rounded-lg overflow-hidden relative bg-white dark:bg-slate-800 group">
                                 <!-- Default Placeholder -->
-                                <div id="placeholder-content" class="w-full h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 p-8 text-center group">
-                                    <i data-lucide="image" class="w-12 h-12 mb-2 opacity-50"></i>
-                                    <p id="placeholder-text" class="text-sm font-medium">No Image Selected</p>
-                                    <p class="text-xs opacity-75 mt-1">Upload an image to start</p>
+                                <div id="placeholder-content" class="w-full h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 p-4 sm:p-6 md:p-8 text-center group">
+                                    <i data-lucide="image" class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 mb-2 opacity-50"></i>
+                                    <p id="placeholder-text" class="text-xs sm:text-sm font-medium">No Image Selected</p>
+                                    <p class="text-[10px] sm:text-xs opacity-75 mt-1">Upload an image to start</p>
                                 </div>
                                 <!-- Image Element (Created dynamically) -->
                                 <img id="active-card-image" src="" class="hidden w-full h-full object-cover" alt="Card Art">
@@ -1260,9 +1272,9 @@
                         </div>
 
                         <!-- Versions Button Container (Moved below card) -->
-                        <div id="editor-actions-btn" class="mt-6 flex justify-center gap-3 z-20 hidden">
-                            <button onclick="openVersionsModal('editor')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 transition-colors border border-blue-700/20">
-                                <i data-lucide="images" class="w-4 h-4"></i> Change Art
+                        <div id="editor-actions-btn" class="mt-3 sm:mt-4 md:mt-6 flex justify-center gap-2 sm:gap-3 z-20 hidden">
+                            <button onclick="openVersionsModal('editor')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold shadow-sm flex items-center gap-1.5 sm:gap-2 transition-colors border border-blue-700/20 touch-manipulation">
+                                <i data-lucide="images" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i> Change Art
                             </button>
                             
                             <!-- Nano Banana Pro Button Removed -->
@@ -1280,9 +1292,9 @@
                             <button onclick="setStep(1)" class="mt-4 text-blue-600 dark:text-blue-400 hover:underline">Go back and upload images</button>
                         </div>
                         <!-- Checkout Button (shown when cards exist) -->
-                        <div id="checkout-button-container" class="hidden fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-                            <button onclick="openCheckoutModal()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-bold text-lg shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 flex items-center gap-3">
-                                <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                        <div id="checkout-button-container" class="hidden fixed bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-50 px-4 w-full max-w-[calc(100%-2rem)] sm:max-w-none sm:w-auto">
+                            <button onclick="openCheckoutModal()" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 rounded-lg font-bold text-sm sm:text-base md:text-lg shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 sm:gap-3 touch-manipulation">
+                                <i data-lucide="shopping-cart" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                                 Proceed to Checkout
                             </button>
                         </div>
@@ -1429,6 +1441,33 @@
             }
         }
 
+        // --- MOBILE MENU ---
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const menuIcon = document.getElementById('menu-icon');
+            if (menu && menuIcon) {
+                const isHidden = menu.classList.contains('hidden');
+                if (isHidden) {
+                    menu.classList.remove('hidden');
+                    menuIcon.setAttribute('data-lucide', 'x');
+                } else {
+                    menu.classList.add('hidden');
+                    menuIcon.setAttribute('data-lucide', 'menu');
+                }
+                lucide.createIcons();
+            }
+        }
+
+        function closeMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const menuIcon = document.getElementById('menu-icon');
+            if (menu && menuIcon) {
+                menu.classList.add('hidden');
+                menuIcon.setAttribute('data-lucide', 'menu');
+                lucide.createIcons();
+            }
+        }
+
         // --- IMAGE COMPRESSION ---
         async function compressImage(base64String, maxSizeMB = 0.8) {
             return new Promise((resolve) => {
@@ -1553,18 +1592,46 @@
         }
 
         // --- VIEW NAVIGATION ---
+        // Helper function to show/hide navbar elements consistently
+        function updateNavbarVisibility(showNavLinks) {
+            const navLinks = document.getElementById('main-nav-links');
+            const startBtn = document.getElementById('start-btn');
+            
+            if (navLinks) {
+                if (showNavLinks) {
+                    // For landing pages: restore original responsive classes
+                    // Should be: "hidden md:flex" (hidden on mobile, visible on desktop)
+                    navLinks.className = 'hidden md:flex items-center space-x-8 font-medium text-sm text-slate-600 dark:text-slate-300';
+                } else {
+                    // For stepper mode: completely hide everywhere
+                    navLinks.classList.add('hidden');
+                    navLinks.classList.remove('md:flex');
+                }
+            }
+            
+            if (startBtn) {
+                if (showNavLinks) {
+                    // Restore original classes for start button
+                    startBtn.className = 'hidden md:block bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md font-semibold text-sm transition-colors shadow-sm';
+                } else {
+                    startBtn.classList.add('hidden');
+                }
+            }
+        }
+
         function startDesign() {
             safeClassList('landing-view', 'add', 'hidden');
             safeClassList('how-it-works-view', 'add', 'hidden');
             safeClassList('pricing-view', 'add', 'hidden');
             safeClassList('why-us-view', 'add', 'hidden');
-            safeClassList('main-nav-links', 'add', 'hidden');
-            safeClassList('start-btn', 'add', 'hidden');
             safeClassList('main-footer', 'add', 'hidden');
             safeClassList('design-stepper', 'remove', 'hidden');
             
-            const exitBtn = document.getElementById('exit-btn');
-            if(exitBtn) { exitBtn.classList.remove('hidden'); exitBtn.classList.add('flex'); }
+            // Hide navbar elements in stepper mode
+            updateNavbarVisibility(false);
+            
+            // Close mobile menu if open
+            closeMobileMenu();
             
             window.scrollTo(0, 0);
             updateDeckStats();
@@ -1576,12 +1643,15 @@
             safeClassList('how-it-works-view', 'add', 'hidden');
             safeClassList('pricing-view', 'add', 'hidden');
             safeClassList('why-us-view', 'add', 'hidden');
-            safeClassList('main-nav-links', 'remove', 'hidden');
-            safeClassList('start-btn', 'remove', 'hidden');
             safeClassList('main-footer', 'remove', 'hidden');
             safeClassList('design-stepper', 'add', 'hidden');
-            const exitBtn = document.getElementById('exit-btn');
-            if(exitBtn) { exitBtn.classList.add('hidden'); exitBtn.classList.remove('flex'); }
+            
+            // Show navbar elements on landing pages
+            updateNavbarVisibility(true);
+            
+            // Close mobile menu if open
+            closeMobileMenu();
+            
             window.scrollTo(0, 0);
             lucide.createIcons();
         }
@@ -1592,14 +1662,10 @@
             safeClassList('pricing-view', 'add', 'hidden');
             safeClassList('why-us-view', 'add', 'hidden');
             safeClassList('how-it-works-view', 'remove', 'hidden');
-            
-            // Ensure nav elements are visible
-            safeClassList('main-nav-links', 'remove', 'hidden');
-            safeClassList('start-btn', 'remove', 'hidden');
             safeClassList('main-footer', 'remove', 'hidden');
             
-            const exitBtn = document.getElementById('exit-btn');
-            if(exitBtn) { exitBtn.classList.add('hidden'); exitBtn.classList.remove('flex'); }
+            // Show navbar elements on landing pages
+            updateNavbarVisibility(true);
             
             window.scrollTo(0, 0);
             lucide.createIcons();
@@ -1611,14 +1677,10 @@
             safeClassList('how-it-works-view', 'add', 'hidden');
             safeClassList('why-us-view', 'add', 'hidden');
             safeClassList('pricing-view', 'remove', 'hidden');
-            
-            // Ensure nav elements are visible
-            safeClassList('main-nav-links', 'remove', 'hidden');
-            safeClassList('start-btn', 'remove', 'hidden');
             safeClassList('main-footer', 'remove', 'hidden');
             
-            const exitBtn = document.getElementById('exit-btn');
-            if(exitBtn) { exitBtn.classList.add('hidden'); exitBtn.classList.remove('flex'); }
+            // Show navbar elements on landing pages
+            updateNavbarVisibility(true);
             
             window.scrollTo(0, 0);
             lucide.createIcons();
@@ -1630,14 +1692,10 @@
             safeClassList('how-it-works-view', 'add', 'hidden');
             safeClassList('pricing-view', 'add', 'hidden');
             safeClassList('why-us-view', 'remove', 'hidden');
-            
-            // Ensure nav elements are visible
-            safeClassList('main-nav-links', 'remove', 'hidden');
-            safeClassList('start-btn', 'remove', 'hidden');
             safeClassList('main-footer', 'remove', 'hidden');
             
-            const exitBtn = document.getElementById('exit-btn');
-            if(exitBtn) { exitBtn.classList.add('hidden'); exitBtn.classList.remove('flex'); }
+            // Show navbar elements on landing pages
+            updateNavbarVisibility(true);
             
             window.scrollTo(0, 0);
             lucide.createIcons();
